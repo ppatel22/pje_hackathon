@@ -3,6 +3,7 @@ import cv2
 from pynput import keyboard
 import threading
 import time
+import csv
 
 
 class TelloController:
@@ -25,18 +26,28 @@ class TelloController:
         self.frame_width = 960
         self.frame_height = 720
         self.video_writer = cv2.VideoWriter(
-            f"tello_recording{int(time.time())}.mp4",
+            "tello_recording.mp4",
             cv2.VideoWriter_fourcc(*"mp4v"),
             30,
             (self.frame_width, self.frame_height),
         )
+
+        # Position tracking
+        self.start_time = time.time()
+        self.x, self.y, self.z = 0, 0, 0
+        self.yaw = 0
+
+        # CSV logging setup
+        self.csv_file = open("tello_position_log.csv", "w", newline="")
+        self.csv_writer = csv.writer(self.csv_file)
+        self.csv_writer.writerow(["Time", "X", "Y", "Z", "Yaw"])
 
     def run(self):
         # Start the keyboard listener in a separate thread
         keyboard_thread = threading.Thread(target=self.keyboard_listener)
         keyboard_thread.start()
 
-        # Main loop for video feed and recording
+        # Main loop for video feed, recording, and position logging
         while not self.should_stop:
             frame = self.tello.get_frame_read().frame
 
@@ -65,8 +76,21 @@ class TelloController:
                 (0, 0, 255),
                 2,
             )
+            cv2.putText(
+                display_frame,
+                f"X: {self.x:.2f} Y: {self.y:.2f} Z: {self.z:.2f}",
+                (10, 110),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 255),
+                2,
+            )
 
             cv2.imshow("Tello Video Stream", display_frame)
+
+            # Update position and log to CSV
+            self.update_position()
+            self.log_position()
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 self.should_stop = True
@@ -76,6 +100,7 @@ class TelloController:
         self.tello.land()
         self.tello.streamoff()
         self.video_writer.release()
+        self.csv_file.close()
         cv2.destroyAllWindows()
 
     def keyboard_listener(self):
@@ -134,7 +159,40 @@ class TelloController:
                 self.yaw_velocity,
             )
 
+    def update_position(self):
+        # Calculate time elapsed since last update
+        current_time = time.time()
+        dt = current_time - self.start_time
+        self.start_time = current_time
+
+        # Update yaw (rotation around z-axis)
+        self.yaw += self.yaw_velocity * dt
+
+        # Calculate displacement in drone's local coordinate system
+        dx = self.for_back_velocity * dt
+        dy = self.left_right_velocity * dt
+        dz = self.up_down_velocity * dt
+
+        # Convert to global coordinate system
+        import math
+
+        self.x += dx * math.cos(math.radians(self.yaw)) - dy * math.sin(
+            math.radians(self.yaw)
+        )
+        self.y += dx * math.sin(math.radians(self.yaw)) + dy * math.cos(
+            math.radians(self.yaw)
+        )
+        self.z += dz
+
+    def log_position(self):
+        self.csv_writer.writerow(
+            [time.time() - self.start_time, self.x, self.y, self.z, self.yaw]
+        )
+
 
 if __name__ == "__main__":
     controller = TelloController()
     controller.run()
+
+# go_xyz_speed(x, y, z, speed)
+# curve_xyz_speed(x1, y1, z1, x2, y2, z2, speed)
