@@ -7,3 +7,5 @@ Drone project for PJE hackathon.
     - SIFT Feature extraction: difference of Gaussians computed at different scales, extrema gathered as keypoints
     - For each keypoint, create a histogram of gradients for the surrounding points
     - 'Structure from Motion' - Makes tracks with the corresponding key points via RANSAC
+    - Depth estimation - Semi-Global Matching (SGM)
+    - Meshing - 3D Delaunay tetrahedralization
