@@ -1,5 +1,0 @@
-djitellopy
-opencv-python
-pygame
-numpy
-pynput
