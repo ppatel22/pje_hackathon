@@ -1,13 +1,14 @@
 # Drone Vision
 Drone vision project for PJE hackathon.
+3D Point Cloud Estimation of Surfaces Using Drones
 
 ## Steps to Installation 
 Create a python venv and install the packages needed via ```pip install -r requirements.txt```.
 
 ## Problem Statement
-From peril to precision: Transitioning from high-risk manned reconnaissance to safer autonomous data collection
-Elevating perception: From flat footage to dimensional data for machine navigation
-Sky high costs: Satellite & aerial imagery are expensive, drones are not.
+- From peril to precision: Transitioning from high-risk manned reconnaissance to safer autonomous data collection
+- Elevating perception: From flat footage to dimensional data for machine navigation
+- Sky high costs: Satellite & aerial imagery are expensive, drones are not.
 
 ## Solution
 3D Reconstruction via Point Cloud Estimation
